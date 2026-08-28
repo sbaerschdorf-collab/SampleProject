@@ -7,7 +7,7 @@
 <body>
   <h1>Haushaltsbuch</h1>
 
-  <!-- Bereich: Login/Registrierung (wird angezeigt, wenn niemand eingeloggt ist) -->
+  <!-- Bereich: Login/Registrierung -->
   <div id="auth-bereich">
     <h2>Anmelden oder Registrieren</h2>
     <input type="email" id="email" placeholder="E-Mail">
@@ -18,10 +18,32 @@
     <p id="auth-nachricht"></p>
   </div>
 
-  <!-- Bereich: eingeloggter Nutzer (wird erst später mit Inhalt gefüllt) -->
+  <!-- Bereich: eingeloggt, aber noch KEIN Haushalt vorhanden -->
+  <div id="haushalt-waehlen-bereich" style="display: none;">
+    <h2>Haushalt einrichten</h2>
+    <p id="nutzer-email-2"></p>
+    <button id="btn-abmelden-2">Abmelden</button>
+
+    <hr>
+
+    <h3>Neuen Haushalt erstellen</h3>
+    <input type="text" id="neuer-haushalt-name" placeholder="z.B. Familie Müller">
+    <button id="btn-haushalt-erstellen">Erstellen</button>
+
+    <hr>
+
+    <h3>Bestehendem Haushalt beitreten</h3>
+    <input type="text" id="beitritts-code" placeholder="Haushalts-ID einfügen">
+    <button id="btn-haushalt-beitreten">Beitreten</button>
+
+    <p id="haushalt-nachricht"></p>
+  </div>
+
+  <!-- Bereich: eingeloggt UND Haushalt vorhanden -->
   <div id="app-bereich" style="display: none;">
     <h2>Willkommen!</h2>
     <p id="nutzer-email"></p>
+    <p id="haushalt-info"></p>
     <button id="btn-abmelden">Abmelden</button>
   </div>
 
