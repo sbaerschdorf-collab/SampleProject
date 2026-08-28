@@ -6,6 +6,25 @@
 </head>
 <body>
   <h1>Haushaltsbuch</h1>
+
+  <!-- Bereich: Login/Registrierung (wird angezeigt, wenn niemand eingeloggt ist) -->
+  <div id="auth-bereich">
+    <h2>Anmelden oder Registrieren</h2>
+    <input type="email" id="email" placeholder="E-Mail">
+    <input type="password" id="passwort" placeholder="Passwort">
+    <br><br>
+    <button id="btn-registrieren">Registrieren</button>
+    <button id="btn-anmelden">Anmelden</button>
+    <p id="auth-nachricht"></p>
+  </div>
+
+  <!-- Bereich: eingeloggter Nutzer (wird erst später mit Inhalt gefüllt) -->
+  <div id="app-bereich" style="display: none;">
+    <h2>Willkommen!</h2>
+    <p id="nutzer-email"></p>
+    <button id="btn-abmelden">Abmelden</button>
+  </div>
+
   <script type="module" src="app.js"></script>
 </body>
 </html>
