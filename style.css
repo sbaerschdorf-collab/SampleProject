@@ -1,0 +1,180 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #f4f6f8;
+  color: #1a1a1a;
+  margin: 0;
+  padding: 20px;
+}
+
+.container {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+h1 {
+  color: #2c3e50;
+  font-size: 1.8rem;
+  margin-bottom: 4px;
+}
+
+h1::after {
+  content: "";
+  display: block;
+  width: 60px;
+  height: 4px;
+  background: #4caf50;
+  margin-top: 8px;
+  border-radius: 2px;
+}
+
+h2 {
+  font-size: 1.3rem;
+  color: #2c3e50;
+}
+
+h3 {
+  font-size: 1.05rem;
+  color: #34495e;
+  margin-top: 24px;
+}
+
+.karte {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  margin-bottom: 20px;
+}
+
+input, select {
+  padding: 10px 12px;
+  border: 1px solid #dcdfe3;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  margin: 4px 4px 4px 0;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: #4caf50;
+}
+
+button {
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  margin: 4px 4px 4px 0;
+  transition: background 0.15s ease;
+}
+
+button:hover {
+  background: #43a047;
+}
+
+#btn-abmelden, #btn-abmelden-2 {
+  background: #e0e0e0;
+  color: #333;
+}
+#btn-abmelden:hover, #btn-abmelden-2:hover {
+  background: #cfcfcf;
+}
+
+.btn-loeschen {
+  background: #e53935;
+}
+.btn-loeschen:hover {
+  background: #c62828;
+}
+
+.btn-bearbeiten {
+  background: #1e88e5;
+}
+.btn-bearbeiten:hover {
+  background: #1565c0;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #e5e8eb;
+  margin: 24px 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+th, td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid #eef0f2;
+  font-size: 0.9rem;
+}
+
+th {
+  color: #7a7f87;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+#kategorien-liste {
+  list-style: none;
+  padding: 0;
+}
+
+#kategorien-liste li {
+  background: #f0f2f5;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  display: inline-block;
+  margin-right: 8px;
+  font-size: 0.9rem;
+}
+
+#transaktion-summe {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2c3e50;
+  padding: 12px 0;
+}
+
+#auth-nachricht, #haushalt-nachricht, #kategorie-nachricht, #transaktion-nachricht {
+  color: #c62828;
+  font-size: 0.9rem;
+}
+
+code {
+  background: #f0f2f5;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 500px) {
+  table, thead, tbody, th, td, tr {
+    display: block;
+  }
+  thead {
+    display: none;
+  }
+  td {
+    padding: 6px 0;
+    border: none;
+  }
+  tr {
+    border-bottom: 1px solid #eef0f2;
+    padding: 10px 0;
+  }
+}
