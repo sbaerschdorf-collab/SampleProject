@@ -45,6 +45,23 @@
     <p id="nutzer-email"></p>
     <p id="haushalt-info"></p>
     <button id="btn-abmelden">Abmelden</button>
+
+    <hr>
+
+    <h3>Kategorien</h3>
+
+    <div>
+      <input type="text" id="neue-kategorie-name" placeholder="z.B. Lebensmittel">
+      <select id="neue-kategorie-typ">
+        <option value="expense">Ausgabe</option>
+        <option value="income">Einnahme</option>
+      </select>
+      <button id="btn-kategorie-erstellen">Kategorie anlegen</button>
+    </div>
+
+    <p id="kategorie-nachricht"></p>
+
+    <ul id="kategorien-liste"></ul>
   </div>
 
   <script type="module" src="app.js"></script>
