@@ -4,6 +4,9 @@ const supabaseUrl = 'https://avkuvffhlhwuqbaprwea.supabase.co'
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2a3V2ZmZobGh3dXFiYXByd2VhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5NDM5ODIsImV4cCI6MjEwMzUxOTk4Mn0.WQiJ7ozw9IOYnFf4nqUwc-wpRQmZcvXX7icJUqLFLhU'
 const supabase = createClient(supabaseUrl, supabaseKey)
 
+// Merkt sich den aktuell aktiven Haushalt, damit wir ihn nicht ständig neu laden müssen
+let aktuellerHaushalt = null
+
 // HTML-Elemente
 const authBereich = document.getElementById('auth-bereich')
 const haushaltWaehlenBereich = document.getElementById('haushalt-waehlen-bereich')
@@ -17,7 +20,12 @@ const haushaltNachricht = document.getElementById('haushalt-nachricht')
 const neuerHaushaltName = document.getElementById('neuer-haushalt-name')
 const beitrittsCode = document.getElementById('beitritts-code')
 
-// --- Login/Registrierung (wie bisher) ---
+const kategorieNachricht = document.getElementById('kategorie-nachricht')
+const neueKategorieName = document.getElementById('neue-kategorie-name')
+const neueKategorieTyp = document.getElementById('neue-kategorie-typ')
+const kategorienListe = document.getElementById('kategorien-liste')
+
+// --- Login/Registrierung ---
 
 document.getElementById('btn-registrieren').addEventListener('click', async () => {
   const { error } = await supabase.auth.signUp({
@@ -59,7 +67,6 @@ document.getElementById('btn-haushalt-erstellen').addEventListener('click', asyn
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  // 1. Haushalt anlegen
   const { data: haushalt, error: fehler1 } = await supabase
     .from('households')
     .insert({ name })
@@ -71,7 +78,6 @@ document.getElementById('btn-haushalt-erstellen').addEventListener('click', asyn
     return
   }
 
-  // 2. Sich selbst als Mitglied hinzufügen
   const { error: fehler2 } = await supabase
     .from('household_members')
     .insert({ household_id: haushalt.id, user_id: user.id })
@@ -104,7 +110,6 @@ document.getElementById('btn-haushalt-beitreten').addEventListener('click', asyn
     return
   }
 
-  // Haushalt-Infos laden zur Bestätigung
   const { data: haushalt } = await supabase
     .from('households')
     .select()
@@ -113,6 +118,58 @@ document.getElementById('btn-haushalt-beitreten').addEventListener('click', asyn
 
   zeigeAppBereich(user, haushalt)
 })
+
+// --- Kategorien erstellen ---
+
+document.getElementById('btn-kategorie-erstellen').addEventListener('click', async () => {
+  const name = neueKategorieName.value.trim()
+  const typ = neueKategorieTyp.value
+
+  if (!name) {
+    kategorieNachricht.textContent = 'Bitte einen Namen eingeben.'
+    return
+  }
+
+  const { error } = await supabase
+    .from('categories')
+    .insert({
+      household_id: aktuellerHaushalt.id,
+      name: name,
+      type: typ
+    })
+
+  if (error) {
+    kategorieNachricht.textContent = 'Fehler: ' + error.message
+    return
+  }
+
+  neueKategorieName.value = ''
+  kategorieNachricht.textContent = ''
+  ladeKategorien()
+})
+
+// --- Kategorien laden und anzeigen ---
+
+async function ladeKategorien() {
+  const { data: kategorien, error } = await supabase
+    .from('categories')
+    .select()
+    .eq('household_id', aktuellerHaushalt.id)
+    .order('name')
+
+  if (error) {
+    kategorieNachricht.textContent = 'Fehler beim Laden: ' + error.message
+    return
+  }
+
+  kategorienListe.innerHTML = ''
+  kategorien.forEach(kategorie => {
+    const eintrag = document.createElement('li')
+    const typLabel = kategorie.type === 'income' ? 'Einnahme' : 'Ausgabe'
+    eintrag.textContent = kategorie.name + ' (' + typLabel + ')'
+    kategorienListe.appendChild(eintrag)
+  })
+}
 
 // --- Ansichten wechseln ---
 
@@ -124,6 +181,8 @@ function zeigeHaushaltWaehlen(user) {
 }
 
 function zeigeAppBereich(user, haushalt) {
+  aktuellerHaushalt = haushalt
+
   authBereich.style.display = 'none'
   haushaltWaehlenBereich.style.display = 'none'
   appBereich.style.display = 'block'
@@ -131,6 +190,8 @@ function zeigeAppBereich(user, haushalt) {
   document.getElementById('haushalt-info').innerHTML =
     'Haushalt: <strong>' + haushalt.name + '</strong><br>' +
     'Haushalts-ID zum Teilen mit der Familie: <code>' + haushalt.id + '</code>'
+
+  ladeKategorien()
 }
 
 // --- Prüfen, ob Nutzer schon einem Haushalt angehört ---
