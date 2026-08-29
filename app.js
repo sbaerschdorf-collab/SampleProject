@@ -25,6 +25,17 @@ const neueKategorieName = document.getElementById('neue-kategorie-name')
 const neueKategorieTyp = document.getElementById('neue-kategorie-typ')
 const kategorienListe = document.getElementById('kategorien-liste')
 
+const transaktionNachricht = document.getElementById('transaktion-nachricht')
+const neueTransaktionBetrag = document.getElementById('neue-transaktion-betrag')
+const neueTransaktionKategorie = document.getElementById('neue-transaktion-kategorie')
+const neueTransaktionDatum = document.getElementById('neue-transaktion-datum')
+const neueTransaktionNotiz = document.getElementById('neue-transaktion-notiz')
+const transaktionenListe = document.getElementById('transaktionen-liste')
+const transaktionSumme = document.getElementById('transaktion-summe')
+
+// --- Setze aktuelles Datum ---
+neueTransaktionDatum.valueAsDate = new Date()
+
 // --- Login/Registrierung ---
 
 document.getElementById('btn-registrieren').addEventListener('click', async () => {
@@ -163,12 +174,53 @@ async function ladeKategorien() {
   }
 
   kategorienListe.innerHTML = ''
+  neueTransaktionKategorie.innerHTML = '<option value="">-- Kategorie wählen --</option>'
+
   kategorien.forEach(kategorie => {
-    const eintrag = document.createElement('li')
     const typLabel = kategorie.type === 'income' ? 'Einnahme' : 'Ausgabe'
+
+    const eintrag = document.createElement('li')
     eintrag.textContent = kategorie.name + ' (' + typLabel + ')'
     kategorienListe.appendChild(eintrag)
+
+    const option = document.createElement('option')
+    option.value = kategorie.id
+    option.textContent = kategorie.name + ' (' + typLabel + ')'
+    neueTransaktionKategorie.appendChild(option)
   })
+}
+
+async function ladeTransaktionen() {
+  const { data: transaktionen, error } = await supabase
+    .from('transactions')
+    .select('*, categories(name, type)')
+    .eq('household_id', aktuellerHaushalt.id)
+    .order('transaction_date', { ascending: false })
+
+  if (error) {
+    transaktionNachricht.textContent = 'Fehler beim Laden: ' + error.message
+    return
+  }
+
+  transaktionenListe.innerHTML = ''
+  let summe = 0
+
+  transaktionen.forEach(t => {
+    const zeile = document.createElement('tr')
+
+    const vorzeichen = t.categories?.type === 'income' ? 1 : -1
+    summe += vorzeichen * parseFloat(t.amount)
+
+    zeile.innerHTML =
+      '<td>' + t.transaction_date + '</td>' +
+      '<td>' + (t.categories?.name || '–') + '</td>' +
+      '<td>' + parseFloat(t.amount).toFixed(2) + ' €</td>' +
+      '<td>' + (t.description || '') + '</td>'
+
+    transaktionenListe.appendChild(zeile)
+  })
+
+  transaktionSumme.textContent = 'Aktueller Saldo: ' + summe.toFixed(2) + ' €'
 }
 
 // --- Ansichten wechseln ---
@@ -191,7 +243,7 @@ function zeigeAppBereich(user, haushalt) {
     'Haushalt: <strong>' + haushalt.name + '</strong><br>' +
     'Haushalts-ID zum Teilen mit der Familie: <code>' + haushalt.id + '</code>'
 
-  ladeKategorien()
+  ladeKategorien().then(() => ladeTransaktionen())
 }
 
 // --- Prüfen, ob Nutzer schon einem Haushalt angehört ---
@@ -210,6 +262,46 @@ async function pruefeHaushalt(user) {
   }
 }
 
+// --- Event Listener ---
+
+document.getElementById('btn-transaktion-erstellen').addEventListener('click', async () => {
+  const betrag = parseFloat(neueTransaktionBetrag.value)
+  const kategorieId = neueTransaktionKategorie.value
+  const datum = neueTransaktionDatum.value
+  const notiz = neueTransaktionNotiz.value.trim()
+
+  if (!betrag || isNaN(betrag)) {
+    transaktionNachricht.textContent = 'Bitte einen gültigen Betrag eingeben.'
+    return
+  }
+  if (!kategorieId) {
+    transaktionNachricht.textContent = 'Bitte eine Kategorie auswählen.'
+    return
+  }
+
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { error } = await supabase
+    .from('transactions')
+    .insert({
+      household_id: aktuellerHaushalt.id,
+      category_id: kategorieId,
+      user_id: user.id,
+      amount: betrag,
+      description: notiz || null,
+      transaction_date: datum
+    })
+
+  if (error) {
+    transaktionNachricht.textContent = 'Fehler: ' + error.message
+    return
+  }
+
+  neueTransaktionBetrag.value = ''
+  neueTransaktionNotiz.value = ''
+  transaktionNachricht.textContent = ''
+  ladeTransaktionen()
+})
 // --- Beim Laden der Seite: Session prüfen ---
 
 supabase.auth.getSession().then(({ data }) => {
