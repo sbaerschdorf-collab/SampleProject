@@ -63,7 +63,34 @@
 
     <ul id="kategorien-liste"></ul>
   </div>
+    <hr>
 
+    <h3>Neue Transaktion erfassen</h3>
+
+    <div>
+      <input type="number" id="neue-transaktion-betrag" placeholder="Betrag (z.B. 25.50)" step="0.01">
+      <select id="neue-transaktion-kategorie"></select>
+      <input type="date" id="neue-transaktion-datum">
+      <input type="text" id="neue-transaktion-notiz" placeholder="Notiz (optional)">
+      <button id="btn-transaktion-erstellen">Eintragen</button>
+    </div>
+
+    <p id="transaktion-nachricht"></p>
+
+    <h3>Bisherige Einträge</h3>
+    <p id="transaktion-summe"></p>
+    <table id="transaktionen-tabelle" border="1" cellpadding="5">
+      <thead>
+        <tr>
+          <th>Datum</th>
+          <th>Kategorie</th>
+          <th>Betrag</th>
+          <th>Notiz</th>
+        </tr>
+      </thead>
+      <tbody id="transaktionen-liste"></tbody>
+    </table>
+  
   <script type="module" src="app.js"></script>
 </body>
 </html>
