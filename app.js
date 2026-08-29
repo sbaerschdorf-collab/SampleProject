@@ -215,12 +215,56 @@ async function ladeTransaktionen() {
       '<td>' + t.transaction_date + '</td>' +
       '<td>' + (t.categories?.name || '–') + '</td>' +
       '<td>' + parseFloat(t.amount).toFixed(2) + ' €</td>' +
-      '<td>' + (t.description || '') + '</td>'
+      '<td>' + (t.description || '') + '</td>' +
+      '<td>' +
+        '<button class="btn-bearbeiten" data-id="' + t.id + '">Bearbeiten</button> ' +
+        '<button class="btn-loeschen" data-id="' + t.id + '">Löschen</button>' +
+      '</td>'
 
     transaktionenListe.appendChild(zeile)
   })
 
   transaktionSumme.textContent = 'Aktueller Saldo: ' + summe.toFixed(2) + ' €'
+
+  // Klick-Handler für alle "Löschen"-Buttons
+  document.querySelectorAll('.btn-loeschen').forEach(button => {
+    button.addEventListener('click', async () => {
+      const id = button.dataset.id
+      const bestaetigt = confirm('Diese Transaktion wirklich löschen?')
+      if (!bestaetigt) return
+
+      const { error } = await supabase.from('transactions').delete().eq('id', id)
+      if (error) {
+        alert('Fehler beim Löschen: ' + error.message)
+      } else {
+        ladeTransaktionen()
+      }
+    })
+  })
+
+  // Klick-Handler für alle "Bearbeiten"-Buttons
+  document.querySelectorAll('.btn-bearbeiten').forEach(button => {
+    button.addEventListener('click', () => {
+      const id = button.dataset.id
+      const transaktion = transaktionen.find(t => t.id === id)
+      starteBearbeitung(transaktion)
+    })
+  })
+}
+
+// Füllt das Eingabeformular oben mit den Werten der gewählten Transaktion,
+// statt eine neue zu erstellen, überschreiben wir die vorhandene beim Speichern.
+let bearbeiteteTransaktionId = null
+
+function starteBearbeitung(transaktion) {
+  bearbeiteteTransaktionId = transaktion.id
+  neueTransaktionBetrag.value = transaktion.amount
+  neueTransaktionKategorie.value = transaktion.category_id
+  neueTransaktionDatum.value = transaktion.transaction_date
+  neueTransaktionNotiz.value = transaktion.description || ''
+
+  document.getElementById('btn-transaktion-erstellen').textContent = 'Änderung speichern'
+  transaktionNachricht.textContent = 'Du bearbeitest einen bestehenden Eintrag.'
 }
 
 // --- Ansichten wechseln ---
@@ -279,22 +323,44 @@ document.getElementById('btn-transaktion-erstellen').addEventListener('click', a
     return
   }
 
-  const { data: { user } } = await supabase.auth.getUser()
+  if (bearbeiteteTransaktionId) {
+    // Bestehenden Eintrag aktualisieren
+    const { error } = await supabase
+      .from('transactions')
+      .update({
+        category_id: kategorieId,
+        amount: betrag,
+        description: notiz || null,
+        transaction_date: datum
+      })
+      .eq('id', bearbeiteteTransaktionId)
 
-  const { error } = await supabase
-    .from('transactions')
-    .insert({
-      household_id: aktuellerHaushalt.id,
-      category_id: kategorieId,
-      user_id: user.id,
-      amount: betrag,
-      description: notiz || null,
-      transaction_date: datum
-    })
+    if (error) {
+      transaktionNachricht.textContent = 'Fehler: ' + error.message
+      return
+    }
 
-  if (error) {
-    transaktionNachricht.textContent = 'Fehler: ' + error.message
-    return
+    bearbeiteteTransaktionId = null
+    document.getElementById('btn-transaktion-erstellen').textContent = 'Eintragen'
+  } else {
+    // Neuen Eintrag anlegen
+    const { data: { user } } = await supabase.auth.getUser()
+
+    const { error } = await supabase
+      .from('transactions')
+      .insert({
+        household_id: aktuellerHaushalt.id,
+        category_id: kategorieId,
+        user_id: user.id,
+        amount: betrag,
+        description: notiz || null,
+        transaction_date: datum
+      })
+
+    if (error) {
+      transaktionNachricht.textContent = 'Fehler: ' + error.message
+      return
+    }
   }
 
   neueTransaktionBetrag.value = ''
@@ -302,6 +368,7 @@ document.getElementById('btn-transaktion-erstellen').addEventListener('click', a
   transaktionNachricht.textContent = ''
   ladeTransaktionen()
 })
+
 // --- Beim Laden der Seite: Session prüfen ---
 
 supabase.auth.getSession().then(({ data }) => {
