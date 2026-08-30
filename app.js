@@ -32,6 +32,10 @@ const neueTransaktionDatum = document.getElementById('neue-transaktion-datum')
 const neueTransaktionNotiz = document.getElementById('neue-transaktion-notiz')
 const transaktionenListe = document.getElementById('transaktionen-liste')
 const transaktionSumme = document.getElementById('transaktion-summe')
+const monatFilter = document.getElementById('monat-filter')
+const auswertungListe = document.getElementById('auswertung-liste')
+
+let alleTransaktionen = []
 
 // --- Setze aktuelles Datum ---
 neueTransaktionDatum.valueAsDate = new Date()
@@ -202,10 +206,22 @@ async function ladeTransaktionen() {
     return
   }
 
+  alleTransaktionen = transaktionen
+  zeigeGefilterteDaten()
+}
+
+function zeigeGefilterteDaten() {
+  const gewaehlterMonat = monatFilter.value // Format: "2026-08" oder leer
+
+  const gefiltert = gewaehlterMonat
+    ? alleTransaktionen.filter(t => t.transaction_date.startsWith(gewaehlterMonat))
+    : alleTransaktionen
+
+  // --- Tabelle ---
   transaktionenListe.innerHTML = ''
   let summe = 0
 
-  transaktionen.forEach(t => {
+  gefiltert.forEach(t => {
     const zeile = document.createElement('tr')
 
     const vorzeichen = t.categories?.type === 'income' ? 1 : -1
@@ -224,9 +240,8 @@ async function ladeTransaktionen() {
     transaktionenListe.appendChild(zeile)
   })
 
-  transaktionSumme.textContent = 'Aktueller Saldo: ' + summe.toFixed(2) + ' €'
+  transaktionSumme.textContent = 'Saldo' + (gewaehlterMonat ? ' (gefiltert)' : '') + ': ' + summe.toFixed(2) + ' €'
 
-  // Klick-Handler für alle "Löschen"-Buttons
   document.querySelectorAll('.btn-loeschen').forEach(button => {
     button.addEventListener('click', async () => {
       const id = button.dataset.id
@@ -242,14 +257,56 @@ async function ladeTransaktionen() {
     })
   })
 
-  // Klick-Handler für alle "Bearbeiten"-Buttons
   document.querySelectorAll('.btn-bearbeiten').forEach(button => {
     button.addEventListener('click', () => {
       const id = button.dataset.id
-      const transaktion = transaktionen.find(t => t.id === id)
+      const transaktion = alleTransaktionen.find(t => t.id === id)
       starteBearbeitung(transaktion)
     })
   })
+
+  // --- Auswertung nach Kategorie ---
+  const summenProKategorie = {}
+
+  gefiltert.forEach(t => {
+    const name = t.categories?.name || 'Ohne Kategorie'
+    const typ = t.categories?.type || 'expense'
+    const key = name + '|' + typ
+
+    if (!summenProKategorie[key]) {
+      summenProKategorie[key] = { name, typ, summe: 0 }
+    }
+    summenProKategorie[key].summe += parseFloat(t.amount)
+  })
+
+  const kategorienArray = Object.values(summenProKategorie)
+  const maxWert = Math.max(...kategorienArray.map(k => k.summe), 1)
+
+  auswertungListe.innerHTML = ''
+
+  if (kategorienArray.length === 0) {
+    auswertungListe.innerHTML = '<p>Keine Daten für diesen Zeitraum.</p>'
+  }
+
+  kategorienArray
+    .sort((a, b) => b.summe - a.summe)
+    .forEach(k => {
+      const prozent = (k.summe / maxWert) * 100
+      const typLabel = k.typ === 'income' ? 'einnahme' : 'ausgabe'
+
+      const zeile = document.createElement('div')
+      zeile.className = 'auswertung-zeile'
+      zeile.innerHTML =
+        '<div class="auswertung-kopf">' +
+          '<span>' + k.name + '</span>' +
+          '<span>' + k.summe.toFixed(2) + ' €</span>' +
+        '</div>' +
+        '<div class="auswertung-balken-hintergrund">' +
+          '<div class="auswertung-balken ' + typLabel + '" style="width: ' + prozent + '%"></div>' +
+        '</div>'
+
+      auswertungListe.appendChild(zeile)
+    })
 }
 
 // Füllt das Eingabeformular oben mit den Werten der gewählten Transaktion,
@@ -368,6 +425,16 @@ document.getElementById('btn-transaktion-erstellen').addEventListener('click', a
   transaktionNachricht.textContent = ''
   ladeTransaktionen()
 })
+
+// --- Event Listener Change Transaktion ---
+
+monatFilter.addEventListener('change', zeigeGefilterteDaten)
+
+document.getElementById('btn-filter-zuruecksetzen').addEventListener('click', () => {
+  monatFilter.value = ''
+  zeigeGefilterteDaten()
+})
+
 
 // --- Beim Laden der Seite: Session prüfen ---
 
